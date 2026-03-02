@@ -9,43 +9,70 @@ import requests
 import re
 from collections import Counter
 
-url = 'https://uk.wikipedia.org/wiki/Python'
 
-file_path = "index.html"
-request = requests.get(url, headers={"User-Agent": ""})
+class Crawler():
+	def __init__(self, urls, headers):
+		self.__urls = urls
+		self.__headers = headers
+		self.__sites = {}
 
-if request.status_code != 200:
-	print(f"{request.status_code}")
-	print(f"{request.text}")
-	exit(1)
+	def request_handler(self):
+		for url in self.__urls:
+			request = requests.get(url, headers=self.__headers)
 
-with open(file_path, 'w') as f:
-	f.write(request.text)
+			if request.url in self.__sites or request.status_code != 200:
+				print(f"{request.status_code}: {request.url}")
+				continue
 
-with open(file_path, 'r') as html_file:
-	content = html_file.read()
+			html_page = BeautifulSoup(request.text, "lxml")
+			filtered_words = Crawler.__filter_page(html_page)
 
-doc = BeautifulSoup(content, "lxml")
+			counter = Counter(filtered_words)
+			self.__sites[request.url] = {
+										"title": html_page.find("title").text, #type:ignore
+										"words": []
+									}
+			for word, _ in counter.most_common(20):
+				self.__sites[request.url]["words"].append(word)
 
-text = doc.get_text(" ")
+		return self.__sites
 
-text = re.sub(r"\s+", " ", text)
-text = text.lower()
+	@classmethod
+	def __filter_page(cls, html_page):
+		text = html_page.get_text(" ")
+		text = re.sub(r"\s+", " ", text.lower())
+		words = re.findall(r"\b[а-яa-zіїє]+\b", text)
+		words_to_delete = {
+    		"з", "не", "для", "у", "в", "й", "а", "як", "або", "є",
+    		"і", "та", "на", "так", "що", "об", "до", "за", "при", "від",
+    		"in", "at", "on", "of", "to", "for", "and", "but", "or", 
+    		"because", "if", "a", "an", "the", "do", 
+    		"does", "did", "have", "has", "will", "not"
+		}
+		filtered_words = []
+		for word in words:
+			if word not in words_to_delete:
+				filtered_words.append(word)
+		return filtered_words
 
-words = re.findall(r"\b[а-яa-zіїє]+\b", text)
-words_to_delete = {
-    "з", "не", "для", "у", "в", "й", "а", "як", "або", "є",
-    "і", "та", "на", "так", "що", "об", "до", "за", "при", "від"
-}
 
-filtered_words = []
-for word in words:
-	if word not in words_to_delete:
-		filtered_words.append(word)
+urls = [
+    "https://www.wikipedia.org",
+    "https://www.bbc.com",
+    "https://www.cnn.com",
+    "https://stackoverflow.com",
+    "https://github.com",
+    "https://reddit.com",
+]
 
-counter = Counter(filtered_words)
+headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36 Edg/145.0.0.0"}
 
-for word, count in counter.most_common(20):
-	print(f"{count}: {word}")
+crawler = Crawler(urls, headers)
+sites = crawler.request_handler()
+for url, data in sites.items():
+	print(url)
+	print(data['title'])
+	print(data['words'])
+	print("-"*40)
 
 
