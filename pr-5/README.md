@@ -9,7 +9,7 @@
 - Приведення всіх форматів дат до єдиного типу `datetime64` за допомогою `pandas.to_datetime()`;
 - Видалення дублікатів та пропущених значень за допомогою `pandas.dtop_duplicates()` та `pandas.dropna()`;
 - Фільтарція міст наступним чином: `df_data_csv = df_data_csv[df_data_csv["City"] == "Kiev"]`, оскільки нам треба дані саме для Києва;
-- Обчислення температур за цельсієм, оскільки в дадасеті дані, отримані з [Kaggle](https://www.kaggle.com/datasets/sudalairajkumar/daily-temperature-of-major-cities/code), записані у фаренгейтах;
+- Обчислення температур за цельсієм, оскільки в дадасеті дані, отримані з [Kaggle](https://www.kaggle.com/datasets/sudalairajkumar/daily-temperature-of-major-cities/code), записані у фаренгейтах.
 
 **Злиття:** Об'єднання трьох датафреймів за спільним ключем `date` методом **Inner Join** за допомогою `pandas.merge()`.
 
